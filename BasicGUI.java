@@ -54,7 +54,12 @@ public class BasicGUI extends Application {
         Text letterOne = new Text("1");
         letterOne.setStyle("-fx-font-size: 48px; -fx-font-weight: bold;");
 
-        VBox puzzleBox = new VBox(20, letterOne, bigBox, backButton);
+        // creating a StackPane to layer the letter inside the box
+        StackPane stackPane = new StackPane();
+        stackPane.getChildren().addAll(bigBox, letterOne);
+
+        // container that arranges the elements vertically
+        VBox puzzleBox = new VBox(20, stackPane, backButton);
         puzzleBox.setStyle("-fx-alignment: center;");
 
         puzzleScene = new Scene(puzzleBox, 300, 200);
