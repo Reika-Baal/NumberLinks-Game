@@ -4,6 +4,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 public class BasicGUI extends Application {
@@ -34,7 +37,7 @@ public class BasicGUI extends Application {
         primaryStage.show();
     }
 
-    // a meethod to create the generate puzzle with the implamentation of a back button
+    // a method to create the generate puzzle with the implamentation of a back button
     private void createPuzzleScene(Stage primaryStage) {
 
         Button backButton = new Button("Back");
@@ -42,14 +45,23 @@ public class BasicGUI extends Application {
         // when the Back button is pressed it goes back to the main scene
         backButton.setOnAction(e -> primaryStage.setScene(mainScene));
 
-        // used to centre
-        StackPane stackPane = new StackPane();
-        stackPane.getChildren().add(backButton);
+        // big empty box (Rectangle) used to test as a placeholder for the actual numberlinks later
+        Rectangle bigBox = new Rectangle(200, 100, Color.LIGHTGRAY);  // size box
+        bigBox.setArcHeight(20);
+        bigBox.setArcWidth(20);
 
-        puzzleScene = new Scene(stackPane, 300, 200);
+        // the text object for the number 1
+        Text letterOne = new Text("1");
+        letterOne.setStyle("-fx-font-size: 48px; -fx-font-weight: bold;");
+
+        VBox puzzleBox = new VBox(20, letterOne, bigBox, backButton);
+        puzzleBox.setStyle("-fx-alignment: center;");
+
+        puzzleScene = new Scene(puzzleBox, 300, 200);
     }
 
     private void openPuzzleScreen(Stage primaryStage) {
+
         primaryStage.setScene(puzzleScene);
     }
 
