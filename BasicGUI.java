@@ -16,7 +16,7 @@ public class BasicGUI extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        // button creation
+        // button creatio
         Button generatepuzzle = new Button("Generate Puzzle");
         Button solvebutton = new Button("Solve Puzzle");
 
@@ -37,7 +37,7 @@ public class BasicGUI extends Application {
         primaryStage.show();
     }
 
-    // a method to create the generate puzzle with the implamentation of a back button
+    // a method to create the generate puzzle with the implementation of a back button
     private void createPuzzleScene(Stage primaryStage) {
 
         Button backButton = new Button("Back");
@@ -45,21 +45,25 @@ public class BasicGUI extends Application {
         // when the Back button is pressed it goes back to the main scene
         backButton.setOnAction(e -> primaryStage.setScene(mainScene));
 
+        Button solvePuzzleButton = new Button("Solve Puzzle");
+
+        solvePuzzleButton.setOnAction(e -> System.out.println("Puzzle solved"));
+
         // big empty box (Rectangle) used to test as a placeholder for the actual numberlinks later
         Rectangle bigBox = new Rectangle(200, 100, Color.LIGHTGRAY);  // size box
-        bigBox.setArcHeight(20);
+        bigBox.setArcHeight(20); // Optional: Round the corners
         bigBox.setArcWidth(20);
 
         // the text object for the number 1
         Text letterOne = new Text("1");
-        letterOne.setStyle("-fx-font-size: 48px; -fx-font-weight: bold;");
+        letterOne.setStyle("-fx-font-size: 48px; -fx-font-weight: bold;");  // Style the text to make it big
 
         // creating a StackPane to layer the letter inside the box
         StackPane stackPane = new StackPane();
         stackPane.getChildren().addAll(bigBox, letterOne);
 
         // container that arranges the elements vertically
-        VBox puzzleBox = new VBox(20, stackPane, backButton);
+        VBox puzzleBox = new VBox(20, stackPane, solvePuzzleButton, backButton);
         puzzleBox.setStyle("-fx-alignment: center;");
 
         puzzleScene = new Scene(puzzleBox, 300, 200);
