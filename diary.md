@@ -13,3 +13,7 @@ Week 4-5: Was meant to create a simple GUI using JavaFX with numbers inside the 
 - Due to other work due around this time, time management has been a big factor on how I will be able to do everything.
 - Will probably work on more logical elements within the next week and then implament the GUI aspect
 - Since a working GUI still hasn't been fully developed I may use Maven since I have done so already and am familar with how to edit the POM file
+
+Week 6: Unfortunately nothing was committed, this was due to me having issues with setting up JavaFX. This made me think switching over to Maven would be easier however in practice I found that to be much more difficult than I initally thought. That being said I managed to fix JavaFX and got it working however required a lot more time to troubleshoot. The issue being my System Path was setup wrong, the Java version was old and my IDE was not responding the any changes made.
+
+week 7: Now that I got JavaFX working I managed to create loads of buttons that work in conjunction with eachother and can actually be used to interact with. This falls in line with the timeline I created, however there are elements that it doesn't follow which I have made a consequence decision to deviate slightly. I have made a clear foundation but will be working on creating the SOLVABLE unique Numberlinks within a seperate branch and soley work on that after I'm satisfied with the base foundation. This ensures that the standards I uphold are met and my full focus is on it.
