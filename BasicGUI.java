@@ -13,7 +13,7 @@ public class BasicGUI extends Application {
 
     private Scene mainScene;
     private Scene puzzleScene;
-    private Scene levelSelectScene;
+    private int currentLevel = 0;  // initial level is 0
 
     @Override
     public void start(Stage primaryStage) {
@@ -23,7 +23,7 @@ public class BasicGUI extends Application {
 
         // place holders for the buttons actions which later will be modified to have AI backtracking etc
         generatepuzzle.setOnAction(e -> openPuzzleScreen(primaryStage));
-        selectLevel.setOnAction(e -> openLevelSelectScreen(primaryStage));
+        selectLevel.setOnAction(e -> createLevelSelectScene(primaryStage));
 
         // this is the VBox container for the buttons to ensure that they are centered
         VBox vbox = new VBox(10, generatepuzzle, selectLevel);
@@ -34,16 +34,13 @@ public class BasicGUI extends Application {
 
         createPuzzleScene(primaryStage);
 
-        createLevelSelectScene(primaryStage);
-
         primaryStage.setScene(mainScene);
         primaryStage.show();
     }
 
-    // this is the VBox container for the buttons to ensure that they are centered
+    // Method to create the "Generate Puzzle" scene with a Back button and Solve Puzzle button
     private void createPuzzleScene(Stage primaryStage) {
-
-                        = Button backButton = new Button("Back");
+        Button backButton = new Button("Back");
 
         // when the Back button is pressed it goes back to the main scene
         backButton.setOnAction(e -> primaryStage.setScene(mainScene));
@@ -57,13 +54,13 @@ public class BasicGUI extends Application {
         bigBox.setArcHeight(20); // Optional: round the corners ; if i want to change I just get rid of 20
         bigBox.setArcWidth(20);
 
-        // the text object for the number 1
-        Text letterOne = new Text("1");
-        letterOne.setStyle("-fx-font-size: 48px; -fx-font-weight: bold;");
+        // the text object for the number initially it is 0 and then changes
+        Text levelText = new Text(Integer.toString(currentLevel));
+        levelText.setStyle("-fx-font-size: 48px; -fx-font-weight: bold;");
 
         // creating a StackPane to layer the letter inside the box
         StackPane stackPane = new StackPane();
-        stackPane.getChildren().addAll(bigBox, letterOne);
+        stackPane.getChildren().addAll(bigBox, levelText);
 
         // container that arranges the elements vertically
         VBox puzzleBox = new VBox(20, stackPane, solvePuzzleButton, backButton);
@@ -74,38 +71,38 @@ public class BasicGUI extends Application {
 
     // a method that creates the "Level Selection" scene with level buttons
     private void createLevelSelectScene(Stage primaryStage) {
-
         Button level1 = new Button("Level 1");
         Button level2 = new Button("Level 2");
         Button level3 = new Button("Level 3");
         Button level4 = new Button("Level 4");
         Button level5 = new Button("Level 5");
 
-        // set actions for level buttons which right now they just print the level number
-        level1.setOnAction(e -> System.out.println("Level 1 selected"));
-        level2.setOnAction(e -> System.out.println("Level 2 selected"));
-        level3.setOnAction(e -> System.out.println("Level 3 selected"));
-        level4.setOnAction(e -> System.out.println("Level 4 selected"));
-        level5.setOnAction(e -> System.out.println("Level 5 selected"));
+        // Set actions for level button where each prints the current level
+        level1.setOnAction(e -> selectLevel(primaryStage, 1));
+        level2.setOnAction(e -> selectLevel(primaryStage, 2));
+        level3.setOnAction(e -> selectLevel(primaryStage, 3));
+        level4.setOnAction(e -> selectLevel(primaryStage, 4));
+        level5.setOnAction(e -> selectLevel(primaryStage, 5));
 
         VBox levelBox = new VBox(10, level1, level2, level3, level4, level5);
         levelBox.setStyle("-fx-alignment: center;");
 
         // back button to return to the main screen
         Button backButton = new Button("Back");
-        backButton.setOnAction(e -> primaryStage.setScene(mainScene));
+        backButton.setOnAction(e -> primaryStage.setScene(puzzleScene));
 
         levelBox.getChildren().add(backButton);
-        levelSelectScene = new Scene(levelBox, 300, 300);
+        Scene levelSelectScene = new Scene(levelBox, 300, 300);
+        primaryStage.setScene(levelSelectScene);
+    }
+
+    private void selectLevel(Stage primaryStage, int level) {
+        currentLevel = level; // set the current level
+        primaryStage.setScene(puzzleScene);
     }
 
     private void openPuzzleScreen(Stage primaryStage) {
         primaryStage.setScene(puzzleScene);
-    }
-
-    // method used to open the "Select Level" scene
-    private void openLevelSelectScreen(Stage primaryStage) {
-        primaryStage.setScene(levelSelectScene);
     }
 
     public static void main(String[] args) {
