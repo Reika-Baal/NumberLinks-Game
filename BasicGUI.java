@@ -13,7 +13,7 @@ public class BasicGUI extends Application {
 
     private Scene mainScene;
     private Scene puzzleScene;
-    private int currentLevel = 0;  // initial level is 0
+    private int currentLevel = 0;  // start with level 0
 
     @Override
     public void start(Stage primaryStage) {
@@ -32,14 +32,13 @@ public class BasicGUI extends Application {
         mainScene = new Scene(vbox, 300, 200);
         primaryStage.setTitle("Puzzle Game");
 
-        createPuzzleScene(primaryStage);
-
         primaryStage.setScene(mainScene);
         primaryStage.show();
     }
 
-    // Method to create the "Generate Puzzle" scene with a Back button and Solve Puzzle button
+    // a method to create the generate puzzle with the implementation of a back button
     private void createPuzzleScene(Stage primaryStage) {
+
         Button backButton = new Button("Back");
 
         // when the Back button is pressed it goes back to the main scene
@@ -97,11 +96,14 @@ public class BasicGUI extends Application {
     }
 
     private void selectLevel(Stage primaryStage, int level) {
-        currentLevel = level; // set the current level
+        currentLevel = level; // sets current level
+        createPuzzleScene(primaryStage);
         primaryStage.setScene(puzzleScene);
     }
 
     private void openPuzzleScreen(Stage primaryStage) {
+        currentLevel = 0;  // set the level to 0 when generating a new puzzle
+        createPuzzleScene(primaryStage);
         primaryStage.setScene(puzzleScene);
     }
 
