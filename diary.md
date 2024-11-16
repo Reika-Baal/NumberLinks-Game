@@ -17,3 +17,11 @@ Week 4-5: Was meant to create a simple GUI using JavaFX with numbers inside the 
 Week 6: Unfortunately nothing was committed, this was due to me having issues with setting up JavaFX. This made me think switching over to Maven would be easier however in practice I found that to be much more difficult than I initally thought. That being said I managed to fix JavaFX and got it working however required a lot more time to troubleshoot. The issue being my System Path was setup wrong, the Java version was old and my IDE was not responding the any changes made.
 
 week 7: Now that I got JavaFX working I managed to create loads of buttons that work in conjunction with eachother and can actually be used to interact with. This falls in line with the timeline I created, however there are elements that it doesn't follow which I have made a consequence decision to deviate slightly. I have made a clear foundation but will be working on creating the SOLVABLE unique Numberlinks within a seperate branch and soley work on that after I'm satisfied with the base foundation. This ensures that the standards I uphold are met and my full focus is on it.
+
+Week 8: Though a lot of progress was made the previous week, with stress from other assignments the quality of work this week has been negabile where focus has been on other studies. None the less this has been an important week in terms of reflection.
+- Looked over code to see what can be added and improved.
+- Tried to organised my thoughts to be more streamline and in turn more productive to the final project.
+- Had a meeting with my Supervisor where we had discussion on the work, and the progress made. I had the opportunity to explain the internal struggles I had with the project and how I felt the progress was coming along.
+- Unique levels that are updated dynamically (will get removed and updated later).
+- Buttons functioning properly.
+- Able to go from main menu to level selector etc.
