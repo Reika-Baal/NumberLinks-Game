@@ -1,7 +1,10 @@
 import javafx.application.Application;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
@@ -17,48 +20,49 @@ public class BasicGUI extends Application {
         // button creation
         Button generatePuzzle = new Button("Generate Puzzle");
         Button selectLevel = new Button("Select Level");
-
+    
          // place holders for the buttons actions which later will be modified to have AI backtracking etc
         generatePuzzle.setOnAction(e -> openPuzzleScreen(primaryStage, 0)); 
         selectLevel.setOnAction(e -> openLevelSelectScreen(primaryStage)); 
-
+    
         // this is the VBox container for the buttons to ensure that they are centered
-        javafx.scene.layout.VBox vbox = new javafx.scene.layout.VBox(10, generatePuzzle, selectLevel);
-        vbox.setStyle("-fx-alignment: center;");
-
-        mainScene = new Scene(vbox, 300, 200);
+        VBox vbox = new VBox(10, generatePuzzle, selectLevel);
+        vbox.setAlignment(Pos.CENTER); 
+    
+        mainScene = new Scene(vbox, 500, 600); // consistent dimensions for all scenes
         primaryStage.setTitle("Puzzle Game");
-
+    
+        primaryStage.setWidth(500);
+        primaryStage.setHeight(600);
         primaryStage.setScene(mainScene);
         primaryStage.show();
-    }
-
-    private void createPuzzleScene(Stage primaryStage, int level) {
-
-        Button backButton = new Button("Back");
-    
-        // back button to return to the main screen
-        backButton.setOnAction(e -> primaryStage.setScene(mainScene));
-    
-        // creates 5x5 Numberlink puzzle grid
-        GridPane grid = createPuzzleGrid(level);
-    
-        Button solvePuzzleButton = new Button("Solve Puzzle");
-    
-        solvePuzzleButton.setOnAction(e -> System.out.println("Puzzle solved"));
-    
-        // container for the buttons
-        javafx.scene.layout.VBox buttonsBox = new javafx.scene.layout.VBox(10, solvePuzzleButton, backButton);
-        buttonsBox.setStyle("-fx-alignment: center;");
-    
-        javafx.scene.layout.VBox puzzleBox = new javafx.scene.layout.VBox(20, grid, buttonsBox);
-        puzzleBox.setStyle("-fx-alignment: center;");
-    
-        puzzleBox.setAlignment(javafx.geometry.Pos.CENTER);
-    
-        puzzleScene = new Scene(puzzleBox, 400, 450);
     }    
 
+    private void createPuzzleScene(Stage primaryStage, int level) {
+        Button backButton = new Button("Back");
+        backButton.setOnAction(e -> primaryStage.setScene(mainScene));
+    
+        // the 5x5 puzzle grid
+        GridPane grid = createPuzzleGrid(level);
+    
+        grid.setAlignment(Pos.CENTER);
+    
+        // solve Puzzle and Back buttons in a VBox
+        Button solvePuzzleButton = new Button("Solve Puzzle");
+        solvePuzzleButton.setOnAction(e -> System.out.println("Puzzle solved"));
+    
+        VBox buttonsBox = new VBox(10, solvePuzzleButton, backButton);
+        buttonsBox.setAlignment(Pos.CENTER);
+    
+        // Combine grid and buttons
+        VBox puzzleBox = new VBox(20, grid, buttonsBox);
+        puzzleBox.setAlignment(Pos.CENTER); 
+        puzzleBox.setPrefSize(500, 600);
+
+        puzzleScene = new Scene(puzzleBox, 500, 600);
+        primaryStage.setScene(puzzleScene);
+    }    
+    
     // the method for creating the 5x5 grid with colored paths for Numberlink (based on the level)
     private GridPane createPuzzleGrid(int level) {
         GridPane grid = new GridPane();
@@ -70,11 +74,9 @@ public class BasicGUI extends Application {
 
         for (int row = 0; row < size; row++) {
             for (int col = 0; col < size; col++) {
-                Rectangle cell = new Rectangle(50, 50);  // Each cell is a 50x50 rectangle
+                Rectangle cell = new Rectangle(50, 50);  // each cell is a 50x50 rectangle
 
-                // Assign colors based on the selected level
                 if (level == 0) {
-                    // Generate Puzzle: Randomized paths with distinct colors
                     if (row == 0 && col == 0) {
                         cell.setFill(Color.RED);  // R start
                     } else if (row == 4 && col == 4) {
@@ -92,7 +94,6 @@ public class BasicGUI extends Application {
                     }
                 }
                 else if (level == 1) {
-                    // Level 1: Standard paths
                     if (row == 0 && col == 0) {
                         cell.setFill(Color.BLUE);  
                     } else if (row == 4 && col == 4) {
