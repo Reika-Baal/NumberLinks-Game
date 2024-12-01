@@ -32,3 +32,4 @@ Week 9: Changes where made that improved the UI slightly. This includes making a
 - Can be scaled up with parameters to ensure difficulty increase
 These changes will be worked on a seperate file just like how back tracking was done on a seperate file and once done all will be combined as one!
 
+Week 10: Finally created a unique file called NumberLinks that does what it is supposed to. Which is generate a valid RANDOM numberlink and uses backtracking to solve it which in turn verifies that it is a valid NumberLinks. This borrows a lot of inspiration for the EightQueensProblem but now modified to work for this context. I suspect my next week will be fairly quiet considering I have to create a report, presentation and video demonstration however though not fully satisfied with the amount of work done, I'm confident that for next term I have everything setup to finish the project ahead of my proposed schedule and even add additional features I wanted. 
