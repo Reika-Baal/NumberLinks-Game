@@ -90,4 +90,133 @@ public class RealGUI extends Application {
         levelSelectScene = new Scene(levelBox, 300, 250);
         primaryStage.setScene(levelSelectScene);
     }
+    // maps the integer code to a JavaFX Color.
+    // 0 -> grey, 1 -> red, 2 -> blue, 3 -> green, 4 -> yellow
+    private Color getColorFromCode(int code) {
+        switch (code) {
+            case 1: return Color.RED;
+            case 2: return Color.BLUE;
+            case 3: return Color.GREEN;
+            case 4: return Color.YELLOW;
+            default: return Color.LIGHTGRAY;
+        }
+    }
+
+    // an inner class which generates Numberlinks.java puzzles
+    class ColorNumberLinksGenerator {
+        private int[][] grid;
+        private int gridSize;
+        private int pairCount;
+        private Random random;
+
+        public ColorNumberLinksGenerator(int gridSize) {
+            this.gridSize = gridSize;
+            // gridsize/2 ensures grid sizes 5 to 9 & the paircount will be 2-4
+            this.pairCount = gridSize / 2; // pairs aren't > than available colours
+            grid = new int[gridSize][gridSize];
+            random = new Random();
+        }
+
+        // generate a new grid by placing each pair, borrowing concepts from my other file
+        public void generate() {
+            for (int i = 0; i < gridSize; i++) {
+                for (int j = 0; j < gridSize; j++) {
+                    grid[i][j] = 0;
+                }
+            }
+            for (int color = 1; color <= pairCount; color++) {
+                placePair(color);
+            }
+        }
+
+        private void placePair(int color) {
+            int x1 = random.nextInt(gridSize);
+            int y1 = random.nextInt(gridSize);
+            while (grid[x1][y1] != 0) {
+                x1 = random.nextInt(gridSize);
+                y1 = random.nextInt(gridSize);
+            }
+            grid[x1][y1] = color;
+
+            int x2 = random.nextInt(gridSize);
+            int y2 = random.nextInt(gridSize);
+            while (grid[x2][y2] != 0 || (x1 == x2 && y1 == y2)) {
+                x2 = random.nextInt(gridSize);
+                y2 = random.nextInt(gridSize);
+            }
+            grid[x2][y2] = color;
+        }
+
+        // check done to see if the cell at (x,y) is within bounds AND either empty or is the target cell
+        public boolean isSafe(int x, int y, int targetX, int targetY, int color) {
+            if (x < 0 || x >= gridSize || y < 0 || y >= gridSize) return false;
+            return grid[x][y] == 0 || (x == targetX && y == targetY);
+        }
+
+        // attempts to solve the connections
+        public boolean solveColorLink(int x, int y, int targetX, int targetY, int color) {
+            if (x == targetX && y == targetY) return true;
+
+            // marks it as a path as well as movement
+            grid[x][y] = color;
+            int[] dx = {0, 0, -1, 1};
+            int[] dy = {-1, 1, 0, 0};
+
+            // tries all directions
+            for (int i = 0; i < 4; i++) {
+                int newX = x + dx[i];
+                int newY = y + dy[i];
+                if (isSafe(newX, newY, targetX, targetY, color)) {
+                    if (solveColorLink(newX, newY, targetX, targetY, color)) {
+                        return true;
+                    }
+                }
+            }
+            // backtracking is done for unmarking the cell
+            grid[x][y] = 0;
+            return false;
+        }
+
+        // verifies that each pair is valid
+        // saves a copy of the original grid, tries to solve each pair and resets
+        public boolean verify() {
+            int[][] originalGrid = new int[gridSize][gridSize];
+            for (int i = 0; i < gridSize; i++) {
+                System.arraycopy(grid[i], 0, originalGrid[i], 0, gridSize);
+            }
+
+            for (int color = 1; color <= pairCount; color++) {
+                int x1 = -1, y1 = -1, x2 = -1, y2 = -1;
+                for (int i = 0; i < gridSize; i++) {
+                    for (int j = 0; j < gridSize; j++) {
+                        if (grid[i][j] == color) {
+                            if (x1 == -1) {
+                                x1 = i;
+                                y1 = j;
+                            } else {
+                                x2 = i;
+                                y2 = j;
+                            }
+                        }
+                    }
+                }
+                if (!solveColorLink(x1, y1, x2, y2, color)) {
+                    return false;
+                }
+                // restore the grid for the next color
+                for (int i = 0; i < gridSize; i++) {
+                    System.arraycopy(originalGrid[i], 0, grid[i], 0, gridSize);
+                }
+            }
+            return true;
+        }
+
+        public int[][] getGrid() {
+            return grid;
+        }
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 }
