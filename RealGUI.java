@@ -65,8 +65,12 @@ public class RealGUI extends Application {
         Button solveButton = new Button("Solve Puzzle");
         solveButton.setOnAction(e -> System.out.println("Puzzle solved")); // placeholder until the solve button actually solves it
 
-        VBox puzzleBox = new VBox(20, grid, new VBox(10, solveButton, backButton));
+        VBox buttonsBox = new VBox(10, solveButton, backButton);
+        buttonsBox.setAlignment(Pos.CENTER);
+
+        VBox puzzleBox = new VBox(20, grid, buttonsBox);
         puzzleBox.setAlignment(Pos.CENTER);
+
         puzzleScene = new Scene(puzzleBox, 500, 600);
         primaryStage.setScene(puzzleScene);
     }
@@ -87,7 +91,7 @@ public class RealGUI extends Application {
         VBox levelBox = new VBox(10, level1, level2, level3, level4, level5);
         levelBox.setAlignment(Pos.CENTER);
 
-        levelSelectScene = new Scene(levelBox, 300, 250);
+        levelSelectScene = new Scene(levelBox, 500, 600);
         primaryStage.setScene(levelSelectScene);
     }
     // maps the integer code to a JavaFX Color.
