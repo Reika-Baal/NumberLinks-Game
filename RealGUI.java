@@ -2,12 +2,14 @@ import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
-import java.util.Random;
+import java.util.*;
 
 public class RealGUI extends Application {
 
@@ -37,7 +39,7 @@ public class RealGUI extends Application {
     private void openPuzzleScreen(Stage primaryStage, int level) {
         int gridSize = level + 4;
         ColorNumberLinksGenerator generator = new ColorNumberLinksGenerator(gridSize);
-        
+
         // generate a puzzle until a solvable one
         do {
             generator.generate();
@@ -49,12 +51,16 @@ public class RealGUI extends Application {
         GridPane grid = new GridPane();
         grid.setHgap(5);
         grid.setVgap(5);
+        StackPane[][] cellPanes = new StackPane[gridSize][gridSize];
+
         for (int row = 0; row < gridSize; row++) {
             for (int col = 0; col < gridSize; col++) {
                 Rectangle cell = new Rectangle(50, 50);
                 int colorCode = puzzleGrid[row][col];
                 cell.setFill(getColorFromCode(colorCode));
-                grid.add(cell, col, row);
+                StackPane cellPane = new StackPane(cell);
+                cellPanes[row][col] = cellPane;
+                grid.add(cellPane, col, row);
             }
         }
         grid.setAlignment(Pos.CENTER);
@@ -68,16 +74,20 @@ public class RealGUI extends Application {
             if (generator.solvePuzzle()) {
                 grid.getChildren().clear();
                 int[][] solvedGrid = generator.getGrid();
+                Map<String, String> arrows = generator.getArrowMap();
                 for (int row = 0; row < gridSize; row++) {
                     for (int col = 0; col < gridSize; col++) {
                         Rectangle cell = new Rectangle(50, 50);
                         int code = solvedGrid[row][col];
-                        if (code < 0) {
-                            cell.setFill(getMutedColorFromCode(Math.abs(code))); // muted colour for the path
-                        } else {
-                            cell.setFill(getColorFromCode(code)); // bright colours for the end point
+                        cell.setFill(code < 0 ? getMutedColorFromCode(Math.abs(code)) : getColorFromCode(code));
+                        StackPane cellPane = new StackPane(cell);
+                        String key = row + "," + col;
+                        if (arrows.containsKey(key)) {
+                            Label arrow = new Label(arrows.get(key));
+                            arrow.setStyle("-fx-font-size: 20; -fx-text-fill: black;");
+                            cellPane.getChildren().add(arrow);
                         }
-                        grid.add(cell, col, row);
+                        grid.add(cellPane, col, row);
                     }
                 }
             }
@@ -112,7 +122,7 @@ public class RealGUI extends Application {
         levelSelectScene = new Scene(levelBox, 500, 600);
         primaryStage.setScene(levelSelectScene);
     }
-    
+
     // maps the integer code to a JavaFX colour
     private Color getColorFromCode(int code) {
         switch (code) {
@@ -123,8 +133,8 @@ public class RealGUI extends Application {
             default: return Color.LIGHTGRAY;
         }
     }
-    
-    // maps integer codes to muted colors.
+
+    // maps integer codes to muted colors
     private Color getMutedColorFromCode(int code) {
         switch (code) {
             case 1: return Color.PINK;
@@ -141,6 +151,7 @@ public class RealGUI extends Application {
         private int gridSize;
         private int pairCount;
         private Random random;
+        private Map<String, String> arrowMap = new HashMap<>();
 
         public ColorNumberLinksGenerator(int gridSize) {
             this.gridSize = gridSize;
@@ -163,6 +174,7 @@ public class RealGUI extends Application {
         }
 
         private void placePair(int color) {
+            // generate the first endpoint at a random empty cell
             int x1 = random.nextInt(gridSize);
             int y1 = random.nextInt(gridSize);
             while (grid[x1][y1] != 0) {
@@ -171,56 +183,58 @@ public class RealGUI extends Application {
             }
             grid[x1][y1] = color;
         
+            // generate the second endpoint but ensure it's not the same as the first,not adjacent to the first and placed in an empty cell
             int x2 = random.nextInt(gridSize);
             int y2 = random.nextInt(gridSize);
             while (grid[x2][y2] != 0 || (x1 == x2 && y1 == y2) ||
-                   (Math.abs(x1 - x2) <= 1 && Math.abs(y1 - y2) <= 1)) { // ensure that the second endpoint is not adjacent to the first
+                   (Math.abs(x1 - x2) <= 1 && Math.abs(y1 - y2) <= 1)) {
                 x2 = random.nextInt(gridSize);
                 y2 = random.nextInt(gridSize);
             }
             grid[x2][y2] = color;
-        }        
-
-        // check done to see if the cell at (x,y) is within bounds AND either empty or is the target cell
-        public boolean isSafe(int x, int y, int targetX, int targetY, int color) {
-            if (x < 0 || x >= gridSize || y < 0 || y >= gridSize) return false;
-            return grid[x][y] == 0 || (x == targetX && y == targetY);
         }
-
-        // attempts to solve the connections
-        // the isStart ensures that endpoints remain marked with a positive colour
+        
+        // checks if a move is within bounds and either on an empty tile or the target tile
+        public boolean isSafe(int x, int y, int targetX, int targetY, int color) {
+            return x >= 0 && x < gridSize && y >= 0 && y < gridSize &&
+                   (grid[x][y] == 0 || (x == targetX && y == targetY));
+        }
+        
+        // recursive method that solves for a single colour, leaving a trail of colour values and arrow directions
         private boolean solveColorLinkMarking(int x, int y, int targetX, int targetY, int color, boolean isStart) {
             if (x == targetX && y == targetY) return true;
-            
-            if (!isStart) {
-                grid[x][y] = -color;
-            }
-            // marks it as a path as well as movement
-            int[] dx = {0, 0, -1, 1};
+        
+            if (!isStart) grid[x][y] = -color; // mark path cell temporarily with negative value
+        
+            int[] dx = {0, 0, -1, 1}; 
             int[] dy = {-1, 1, 0, 0};
-
-            // tries all directions
+            String[] arrows = {"←", "→", "↑", "↓"};
+        
             for (int i = 0; i < 4; i++) {
                 int newX = x + dx[i];
                 int newY = y + dy[i];
                 if (isSafe(newX, newY, targetX, targetY, color)) {
                     if (solveColorLinkMarking(newX, newY, targetX, targetY, color, false)) {
+                        if (!isStart) {
+                            arrowMap.put(x + "," + y, arrows[i]); // map direction for GUI rendering
+                        }
                         return true;
                     }
                 }
             }
-            
-            // backtracking is done for unmarking the cell
-            if (!isStart) {
-                grid[x][y] = 0;
-            }
+        
+            // if path didn't work then unmarks and backtracks
+            if (!isStart) grid[x][y] = 0;
             return false;
         }
-
-        // marks each colour pair's path leaving the solution with negative markers
+        
+        // solves the puzzle for all colour pairs and stores arrow directions
         public boolean solvePuzzle() {
+            arrowMap.clear();
             for (int color = 1; color <= pairCount; color++) {
                 int x1 = -1, y1 = -1, x2 = -1, y2 = -1;
+        
+                // find the two endpoints of the current colour
                 for (int i = 0; i < gridSize; i++) {
                     for (int j = 0; j < gridSize; j++) {
                         if (grid[i][j] == color) {
@@ -232,47 +246,59 @@ public class RealGUI extends Application {
                         }
                     }
                 }
-                if (!solveColorLinkMarking(x1, y1, x2, y2, color, true)) {
-                    return false;
-                }
+        
+                // try solving for this pair
+                if (!solveColorLinkMarking(x1, y1, x2, y2, color, true)) return false;
             }
             return true;
         }
-
-        // verifies that each pair is valid
-        // saves a copy of the original grid, tries to solve each pair and resets
+        
+        // verifies a puzzle is solvable by trying to solve all pairs without affecting the original grid
         public boolean verify() {
             int[][] tempGrid = new int[gridSize][gridSize];
             for (int i = 0; i < gridSize; i++) {
                 System.arraycopy(grid[i], 0, tempGrid[i], 0, gridSize);
             }
+        
             int[][] originalGrid = grid;
-            grid = tempGrid;
+            grid = tempGrid; // use a copy to stop altering the real puzzle
             boolean solvable = true;
+        
             for (int color = 1; color <= pairCount; color++) {
                 int x1 = -1, y1 = -1, x2 = -1, y2 = -1;
+        
+                // locate endpoints for the current colour
                 for (int i = 0; i < gridSize; i++) {
                     for (int j = 0; j < gridSize; j++) {
                         if (grid[i][j] == color) {
                             if (x1 == -1) {
-                                x1 = i; y1 = j;
+                                x1 = i;
+                                y1 = j;
                             } else {
-                                x2 = i; y2 = j;
+                                x2 = i;
+                                y2 = j;
                             }
                         }
                     }
                 }
+        
+                // try solving for this pair
                 if (!solveColorLinkMarking(x1, y1, x2, y2, color, true)) {
                     solvable = false;
                     break;
                 }
             }
-            grid = originalGrid;
+        
+            grid = originalGrid; // restore original state
             return solvable;
-        }
+        }        
 
         public int[][] getGrid() {
             return grid;
+        }
+
+        public Map<String, String> getArrowMap() {
+            return arrowMap;
         }
     }
 
