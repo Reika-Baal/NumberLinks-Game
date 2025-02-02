@@ -63,7 +63,25 @@ public class RealGUI extends Application {
         backButton.setOnAction(e -> primaryStage.setScene(mainScene));
 
         Button solveButton = new Button("Solve Puzzle");
-        solveButton.setOnAction(e -> System.out.println("Puzzle solved")); // placeholder until the solve button actually solves it
+        // when solve is clicked solves the puzzle by marking the connecting paths and redraw the grid
+        solveButton.setOnAction(e -> {
+            if (generator.solvePuzzle()) {
+                grid.getChildren().clear();
+                int[][] solvedGrid = generator.getGrid();
+                for (int row = 0; row < gridSize; row++) {
+                    for (int col = 0; col < gridSize; col++) {
+                        Rectangle cell = new Rectangle(50, 50);
+                        int code = solvedGrid[row][col];
+                        if (code < 0) {
+                            cell.setFill(getMutedColorFromCode(Math.abs(code))); // muted colour for the path
+                        } else {
+                            cell.setFill(getColorFromCode(code)); // bright colours for the end point
+                        }
+                        grid.add(cell, col, row);
+                    }
+                }
+            }
+        });
 
         VBox buttonsBox = new VBox(10, solveButton, backButton);
         buttonsBox.setAlignment(Pos.CENTER);
@@ -94,14 +112,25 @@ public class RealGUI extends Application {
         levelSelectScene = new Scene(levelBox, 500, 600);
         primaryStage.setScene(levelSelectScene);
     }
-    // maps the integer code to a JavaFX Color.
-    // 0 -> grey, 1 -> red, 2 -> blue, 3 -> green, 4 -> yellow
+    
+    // maps the integer code to a JavaFX colour
     private Color getColorFromCode(int code) {
         switch (code) {
             case 1: return Color.RED;
             case 2: return Color.BLUE;
             case 3: return Color.GREEN;
             case 4: return Color.YELLOW;
+            default: return Color.LIGHTGRAY;
+        }
+    }
+    
+    // maps integer codes to muted colors.
+    private Color getMutedColorFromCode(int code) {
+        switch (code) {
+            case 1: return Color.PINK;
+            case 2: return Color.LIGHTBLUE;
+            case 3: return Color.LIGHTGREEN;
+            case 4: return Color.LIGHTYELLOW;
             default: return Color.LIGHTGRAY;
         }
     }
@@ -144,9 +173,8 @@ public class RealGUI extends Application {
         
             int x2 = random.nextInt(gridSize);
             int y2 = random.nextInt(gridSize);
-            
-            while (grid[x2][y2] != 0 || (x1 == x2 && y1 == y2) || 
-                (Math.abs(x1 - x2) <= 1 && Math.abs(y1 - y2) <= 1)) { // ensure that the second endpoint is not adjacent to the first
+            while (grid[x2][y2] != 0 || (x1 == x2 && y1 == y2) ||
+                   (Math.abs(x1 - x2) <= 1 && Math.abs(y1 - y2) <= 1)) { // ensure that the second endpoint is not adjacent to the first
                 x2 = random.nextInt(gridSize);
                 y2 = random.nextInt(gridSize);
             }
@@ -160,11 +188,14 @@ public class RealGUI extends Application {
         }
 
         // attempts to solve the connections
-        public boolean solveColorLink(int x, int y, int targetX, int targetY, int color) {
+        // the isStart ensures that endpoints remain marked with a positive colour
+        private boolean solveColorLinkMarking(int x, int y, int targetX, int targetY, int color, boolean isStart) {
             if (x == targetX && y == targetY) return true;
-
+            
+            if (!isStart) {
+                grid[x][y] = -color;
+            }
             // marks it as a path as well as movement
-            grid[x][y] = color;
             int[] dx = {0, 0, -1, 1};
             int[] dy = {-1, 1, 0, 0};
 
@@ -173,48 +204,71 @@ public class RealGUI extends Application {
                 int newX = x + dx[i];
                 int newY = y + dy[i];
                 if (isSafe(newX, newY, targetX, targetY, color)) {
-                    if (solveColorLink(newX, newY, targetX, targetY, color)) {
+                    if (solveColorLinkMarking(newX, newY, targetX, targetY, color, false)) {
                         return true;
                     }
                 }
             }
+            
             // backtracking is done for unmarking the cell
-            grid[x][y] = 0;
+            if (!isStart) {
+                grid[x][y] = 0;
+            }
             return false;
         }
 
-        // verifies that each pair is valid
-        // saves a copy of the original grid, tries to solve each pair and resets
-        public boolean verify() {
-            int[][] originalGrid = new int[gridSize][gridSize];
-            for (int i = 0; i < gridSize; i++) {
-                System.arraycopy(grid[i], 0, originalGrid[i], 0, gridSize);
-            }
-
+        // marks each colour pair's path leaving the solution with negative markers
+        public boolean solvePuzzle() {
             for (int color = 1; color <= pairCount; color++) {
                 int x1 = -1, y1 = -1, x2 = -1, y2 = -1;
                 for (int i = 0; i < gridSize; i++) {
                     for (int j = 0; j < gridSize; j++) {
                         if (grid[i][j] == color) {
                             if (x1 == -1) {
-                                x1 = i;
-                                y1 = j;
+                                x1 = i; y1 = j;
                             } else {
-                                x2 = i;
-                                y2 = j;
+                                x2 = i; y2 = j;
                             }
                         }
                     }
                 }
-                if (!solveColorLink(x1, y1, x2, y2, color)) {
+                if (!solveColorLinkMarking(x1, y1, x2, y2, color, true)) {
                     return false;
-                }
-                // restore the grid for the next color
-                for (int i = 0; i < gridSize; i++) {
-                    System.arraycopy(originalGrid[i], 0, grid[i], 0, gridSize);
                 }
             }
             return true;
+        }
+
+        // verifies that each pair is valid
+        // saves a copy of the original grid, tries to solve each pair and resets
+        public boolean verify() {
+            int[][] tempGrid = new int[gridSize][gridSize];
+            for (int i = 0; i < gridSize; i++) {
+                System.arraycopy(grid[i], 0, tempGrid[i], 0, gridSize);
+            }
+            int[][] originalGrid = grid;
+            grid = tempGrid;
+            boolean solvable = true;
+            for (int color = 1; color <= pairCount; color++) {
+                int x1 = -1, y1 = -1, x2 = -1, y2 = -1;
+                for (int i = 0; i < gridSize; i++) {
+                    for (int j = 0; j < gridSize; j++) {
+                        if (grid[i][j] == color) {
+                            if (x1 == -1) {
+                                x1 = i; y1 = j;
+                            } else {
+                                x2 = i; y2 = j;
+                            }
+                        }
+                    }
+                }
+                if (!solveColorLinkMarking(x1, y1, x2, y2, color, true)) {
+                    solvable = false;
+                    break;
+                }
+            }
+            grid = originalGrid;
+            return solvable;
         }
 
         public int[][] getGrid() {
