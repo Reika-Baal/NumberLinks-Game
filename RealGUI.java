@@ -215,9 +215,9 @@ public class RealGUI extends Application {
                 int newY = y + dy[i];
                 if (isSafe(newX, newY, targetX, targetY, color)) {
                     if (solveColorLinkMarking(newX, newY, targetX, targetY, color, false)) {
-                        if (!isStart) {
-                            arrowMap.put(x + "," + y, arrows[i]); // map direction for GUI rendering
-                        }
+                        arrowMap.put(x + "," + y, arrows[i]);
+                            if (x == targetX && y == targetY) return true; // map direction for GUI rendering
+                        
                         return true;
                     }
                 }
