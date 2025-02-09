@@ -3,12 +3,14 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+import javafx.concurrent.Task;
 import java.util.*;
 
 public class RealGUI extends Application {
@@ -69,12 +71,29 @@ public class RealGUI extends Application {
         backButton.setOnAction(e -> primaryStage.setScene(mainScene));
 
         Button solveButton = new Button("Solve Puzzle");
+
+        ProgressBar progressBar = new ProgressBar();
+        progressBar.setVisible(false);
+        progressBar.setPrefWidth(300);
+        progressBar.setStyle("-fx-accent: purple;");
+
         // when solve is clicked solves the puzzle by marking the connecting paths and redraw the grid
         solveButton.setOnAction(e -> {
-            if (generator.solvePuzzle()) {
+            progressBar.setVisible(true);
+        
+            Task<Void> task = new Task<>() {
+                @Override
+                protected Void call() {
+                    generator.solvePuzzle();
+                    return null;
+                }
+            };
+        
+            task.setOnSucceeded(ev -> {
                 grid.getChildren().clear();
                 int[][] solvedGrid = generator.getGrid();
                 Map<String, String> arrows = generator.getArrowMap();
+        
                 for (int row = 0; row < gridSize; row++) {
                     for (int col = 0; col < gridSize; col++) {
                         Rectangle cell = new Rectangle(50, 50);
@@ -90,13 +109,17 @@ public class RealGUI extends Application {
                         grid.add(cellPane, col, row);
                     }
                 }
-            }
+        
+                progressBar.setVisible(false);
+            });
+        
+            new Thread(task).start();
         });
-
+        
         VBox buttonsBox = new VBox(10, solveButton, backButton);
         buttonsBox.setAlignment(Pos.CENTER);
 
-        VBox puzzleBox = new VBox(20, grid, buttonsBox);
+        VBox puzzleBox = new VBox(20, grid, buttonsBox, progressBar);
         puzzleBox.setAlignment(Pos.CENTER);
 
         puzzleScene = new Scene(puzzleBox, 500, 600);
@@ -134,7 +157,7 @@ public class RealGUI extends Application {
         }
     }
 
-    // maps integer codes to muted colors
+    // maps integer codes to muted colours
     private Color getMutedColorFromCode(int code) {
         switch (code) {
             case 1: return Color.PINK;
