@@ -203,6 +203,64 @@ public class RealGUI extends Application {
                     && (grid[x][y] == 0 || (x == targetX && y == targetY));
         }
 
+        // solves a single color pair using A* and stores the path
+        private boolean solveColorLinkAStar(int startX, int startY, int targetX, int targetY, int color) {
+
+            // movement 
+            int[] dx = {0, 0, -1, 1};
+            int[] dy = {-1, 1, 0, 0};
+            String[] directions = {"←", "→", "↑", "↓"};
+
+            // tracking visited cells
+            boolean[][] visited = new boolean[gridSize][gridSize];
+            Map<String, int[]> parent = new HashMap<>(); // map used to recreate path after reaching the goal
+
+            // priority queue ordered by cost + heuristic ,A* search
+            PriorityQueue<Node> openSet = new PriorityQueue<>();
+            openSet.add(new Node(startX, startY, 0, heuristic(startX, startY, targetX, targetY)));
+            visited[startX][startY] = true;
+            while (!openSet.isEmpty()) {
+                Node current = openSet.poll();
+
+                // if reached target recreates the path
+                if (current.x == targetX && current.y == targetY) {
+                    int x = targetX, y = targetY;
+                    // backtracking from target to start using parent map
+                    while (!(x == startX && y == startY)) {
+                        int[] prev = parent.get(x + "," + y);
+                        int dir = getDirection(prev[0], prev[1], x, y); // store arrow direction for GUI
+                        if (dir != -1) {
+                            arrowMap.put(prev[0] + "," + prev[1], directions[dir]);
+                        }
+
+                        if (!(prev[0] == startX && prev[1] == startY)) { // mark grid with negative color for path but not at endpoints
+                            grid[prev[0]][prev[1]] = -color;
+                        }
+
+                        // moves to previous cell
+                        x = prev[0];
+                        y = prev[1];
+                    }
+
+                    return true;
+                }
+
+                // all directions
+                for (int i = 0; i < 4; i++) {
+                    int nx = current.x + dx[i];
+                    int ny = current.y + dy[i];
+
+                    // if move is valid and not yet visited
+                    if (isSafe(nx, ny, targetX, targetY, color) && !visited[nx][ny]) {
+                        visited[nx][ny] = true;
+                        parent.put(nx + "," + ny, new int[]{current.x, current.y});
+                    }
+                }
+            }
+
+            return false; // no path found between endpoints
+        }
+
         public int[][] getGrid() {
             return grid;
         }
