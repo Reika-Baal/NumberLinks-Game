@@ -170,6 +170,39 @@ public class RealGUI extends Application {
             random = new Random();
         }
 
+        // fills the grid with empty cells and places pairs
+        public void generate() {
+            for (int i = 0; i < gridSize; i++) {
+                Arrays.fill(grid[i], 0);
+            }
+            for (int color = 1; color <= pairCount; color++) {
+                placePair(color);
+            }
+        }
+
+        // randomly places a color pair making sure they are not adjacent or the same
+        private void placePair(int color) {
+            int x1, y1, x2, y2;
+            do {
+                x1 = random.nextInt(gridSize);
+                y1 = random.nextInt(gridSize);
+            } while (grid[x1][y1] != 0);
+            grid[x1][y1] = color;
+
+            do {
+                x2 = random.nextInt(gridSize);
+                y2 = random.nextInt(gridSize);
+            } while (grid[x2][y2] != 0 || (x1 == x2 && y1 == y2)
+                    || (Math.abs(x1 - x2) <= 1 && Math.abs(y1 - y2) <= 1));
+            grid[x2][y2] = color;
+        }
+
+        // checks if a tile can be visited during pathfinding
+        public boolean isSafe(int x, int y, int targetX, int targetY, int color) {
+            return x >= 0 && x < gridSize && y >= 0 && y < gridSize
+                    && (grid[x][y] == 0 || (x == targetX && y == targetY));
+        }
+
         public int[][] getGrid() {
             return grid;
         }
