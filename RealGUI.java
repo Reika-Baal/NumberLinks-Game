@@ -93,20 +93,44 @@ public class RealGUI extends Application {
                 progressBar.setVisible(false);
 
                 if (!success) {
-                    Alert alert = new Alert(Alert.AlertType.ERROR, "Unexpected Failure.");
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to solve the puzzle completely. Some pairs could not be connected.");
                     alert.showAndWait();
                     return;
                 }
 
-                VBox buttonsBox = new VBox(10, solveButton, backButton);
-                buttonsBox.setAlignment(Pos.CENTER);
+                grid.getChildren().clear();
+                int[][] solvedGrid = generator.getGrid();
+                Map<String, String> arrows = generator.getArrowMap();
 
-                VBox puzzleBox = new VBox(20, grid, buttonsBox, progressBar);
-                puzzleBox.setAlignment(Pos.CENTER);
+                for (int row = 0; row < gridSize; row++) {
+                    for (int col = 0; col < gridSize; col++) {
+                        Rectangle cell = new Rectangle(50, 50);
+                        int code = solvedGrid[row][col];
+                        cell.setFill(code < 0 ? getMutedColorFromCode(Math.abs(code)) : getColorFromCode(code));
+                        StackPane cellPane = new StackPane(cell);
+                        String key = row + "," + col;
+                        if (arrows.containsKey(key)) {
+                            Label arrow = new Label(arrows.get(key));
+                            arrow.setStyle("-fx-font-size: 20; -fx-text-fill: black;");
+                            cellPane.getChildren().add(arrow);
+                        }
+                        grid.add(cellPane, col, row);
+                    }
+                }
+            });
 
-                puzzleScene = new Scene(puzzleBox, 500, 600);
-                primaryStage.setScene(puzzleScene);
-            }
+            new Thread(task).start();
+        });
+
+        VBox buttonsBox = new VBox(10, solveButton, backButton);
+        buttonsBox.setAlignment(Pos.CENTER);
+
+        VBox puzzleBox = new VBox(20, grid, buttonsBox, progressBar);
+        puzzleBox.setAlignment(Pos.CENTER);
+
+        puzzleScene = new Scene(puzzleBox, 500, 600);
+        primaryStage.setScene(puzzleScene);
+    }
 
     private void openLevelSelectScreen(Stage primaryStage) {
         VBox levelBox = new VBox(10);
@@ -203,6 +227,45 @@ public class RealGUI extends Application {
                     && (grid[x][y] == 0 || (x == targetX && y == targetY));
         }
 
+        // node used for A* pathfinding (includes cost and heuristic estimate)
+        class Node implements Comparable<Node> {
+
+            int x, y, cost, estimate;
+
+            Node(int x, int y, int cost, int estimate) {
+                this.x = x;
+                this.y = y;
+                this.cost = cost;
+                this.estimate = estimate;
+            }
+
+            public int compareTo(Node o) {
+                return Integer.compare(this.cost + this.estimate, o.cost + o.estimate);
+            }
+        }
+
+        // Manhattan distance heuristic credit : https://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
+        private int heuristic(int x, int y, int tx, int ty) {
+            return Math.abs(x - tx) + Math.abs(y - ty);
+        }
+
+        // returns direction index (used for arrow rendering)
+        private int getDirection(int x1, int y1, int x2, int y2) {
+            if (x2 == x1 && y2 == y1 - 1) {
+                return 0;
+            }
+            if (x2 == x1 && y2 == y1 + 1) {
+                return 1;
+            }
+            if (x2 == x1 - 1 && y2 == y1) {
+                return 2;
+            }
+            if (x2 == x1 + 1 && y2 == y1) {
+                return 3;
+            }
+            return -1;
+        }
+
         // solves a single color pair using A* and stores the path
         private boolean solveColorLinkAStar(int startX, int startY, int targetX, int targetY, int color) {
 
@@ -254,11 +317,109 @@ public class RealGUI extends Application {
                     if (isSafe(nx, ny, targetX, targetY, color) && !visited[nx][ny]) {
                         visited[nx][ny] = true;
                         parent.put(nx + "," + ny, new int[]{current.x, current.y});
+                        openSet.add(new Node(nx, ny, current.cost + 1, heuristic(nx, ny, targetX, targetY))); // add neighbor to open set with updated cost
                     }
                 }
             }
 
             return false; // no path found between endpoints
+        }
+
+        // attempts to solve all pairs using A* search
+        public boolean solvePuzzle() {
+            arrowMap.clear();
+            for (int color = 1; color <= pairCount; color++) {
+                int x1 = -1, y1 = -1, x2 = -1, y2 = -1;
+                for (int i = 0; i < gridSize; i++) { // find the two endpoints
+                    for (int j = 0; j < gridSize; j++) {
+                        if (grid[i][j] == color) {
+                            if (x1 == -1) {
+                                x1 = i;
+                                y1 = j;
+                            } else {
+                                x2 = i;
+                                y2 = j;
+                            }
+                        }
+                    }
+                }
+                if (!solveColorLinkAStar(x1, y1, x2, y2, color)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // validates that the puzzle is solvable by using copy of grid 
+        public boolean verify() {
+            int[][] tempGrid = new int[gridSize][gridSize];
+            for (int i = 0; i < gridSize; i++) {
+                System.arraycopy(grid[i], 0, tempGrid[i], 0, gridSize);
+            }
+            for (int color = 1; color <= pairCount; color++) {
+                int x1 = -1, y1 = -1, x2 = -1, y2 = -1;
+                for (int i = 0; i < gridSize; i++) {
+                    for (int j = 0; j < gridSize; j++) {
+                        if (tempGrid[i][j] == color) {
+                            if (x1 == -1) {
+                                x1 = i;
+                                y1 = j;
+                            } else {
+                                x2 = i;
+                                y2 = j;
+                            }
+                        }
+                    }
+                }
+                if (!verifyAStarAndMark(tempGrid, x1, y1, x2, y2, color)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // same A* logic used for verification without affecting real grid
+        private boolean verifyAStarAndMark(int[][] tempGrid, int startX, int startY, int targetX, int targetY, int color) {
+
+            int[] dx = {0, 0, -1, 1};
+            int[] dy = {-1, 1, 0, 0};
+
+            Map<String, int[]> parent = new HashMap<>();
+            boolean[][] visited = new boolean[gridSize][gridSize];
+            PriorityQueue<Node> openSet = new PriorityQueue<>();
+
+            openSet.add(new Node(startX, startY, 0, heuristic(startX, startY, targetX, targetY)));
+            visited[startX][startY] = true;
+
+            while (!openSet.isEmpty()) {
+                Node current = openSet.poll();
+                if (current.x == targetX && current.y == targetY) {
+                    int x = targetX, y = targetY;
+                    while (!(x == startX && y == startY)) {
+                        int[] prev = parent.get(x + "," + y);
+
+                        if (!(prev[0] == startX && prev[1] == startY)) {
+                            tempGrid[prev[0]][prev[1]] = -color;
+                        }
+                        x = prev[0];
+                        y = prev[1];
+                    }
+                    return true;
+                }
+
+                for (int i = 0; i < 4; i++) {
+                    int nx = current.x + dx[i];
+                    int ny = current.y + dy[i];
+
+                    if (nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize
+                            && (tempGrid[nx][ny] == 0 || (nx == targetX && ny == targetY)) && !visited[nx][ny]) {
+                        visited[nx][ny] = true;
+                        parent.put(nx + "," + ny, new int[]{current.x, current.y});
+                        openSet.add(new Node(nx, ny, current.cost + 1, heuristic(nx, ny, targetX, targetY)));
+                    }
+                }
+            }
+            return false;
         }
 
         public int[][] getGrid() {
