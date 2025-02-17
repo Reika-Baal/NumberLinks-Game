@@ -151,6 +151,10 @@ public class RealGUI extends Application {
                 Color.GREEN;
             case 4 ->
                 Color.YELLOW;
+            case 5 ->
+                Color.ORANGE;
+            case 6 ->
+                Color.PURPLE;
             default ->
                 Color.LIGHTGRAY;
         };
@@ -167,6 +171,10 @@ public class RealGUI extends Application {
                 Color.LIGHTGREEN;
             case 4 ->
                 Color.LIGHTYELLOW;
+            case 5 ->
+                Color.SANDYBROWN;
+            case 6 ->
+                Color.PLUM;
             default ->
                 Color.LIGHTGRAY;
         };
@@ -184,8 +192,7 @@ public class RealGUI extends Application {
 
         public ColorNumberLinksGenerator(int gridSize) {
             this.gridSize = gridSize;
-            // gridsize/2 ensures grid sizes 5 to 9 & the paircount will be 2-4
-            this.pairCount = gridSize / 2; // pairs aren't > than available colours
+            this.pairCount = Math.min((gridSize * gridSize) / 10, 6); // allows more colours
             grid = new int[gridSize][gridSize];
             random = new Random();
         }
@@ -431,7 +438,7 @@ public class RealGUI extends Application {
         }
     }
 
-    // animates the solution paths one by one for each colour using muted colours
+// animates the solution paths one by one for each colour using muted colours
     private void animateSolution(GridPane grid, int[][] solvedGrid, Map<String, String> arrows, int gridSize) {
         Task<Void> animationTask = new Task<>() {
             @Override
@@ -445,23 +452,29 @@ public class RealGUI extends Application {
                         }
                     }
                 }
+
                 // loops through each colour animate its own path
                 for (int color : colors) {
                     for (int row = 0; row < gridSize; row++) {
                         for (int col = 0; col < gridSize; col++) {
+                            int value = solvedGrid[row][col];
+                            String key = row + "," + col;
 
-                            // if current cell belongs to current path 
-                            if (solvedGrid[row][col] == -color) {
+                            // if current cell belongs to current path or is a start point with arrow
+                            if (value == -color || (value == color && arrows.containsKey(key))) {
                                 int finalRow = row;
                                 int finalCol = col;
 
                                 // run visual update 
                                 Platform.runLater(() -> {
                                     Rectangle rect = new Rectangle(50, 50);
-                                    rect.setFill(getMutedColorFromCode(color));
+                                    if (value == -color) {
+                                        rect.setFill(getMutedColorFromCode(color)); // muted color for path
+                                    } else {
+                                        rect.setFill(getColorFromCode(color)); // original color for endpoint
+                                    }
 
                                     StackPane cellPane = new StackPane(rect); // holds the cell and arrow
-                                    String key = finalRow + "," + finalCol;
                                     if (arrows.containsKey(key)) {
                                         Label arrow = new Label(arrows.get(key));
                                         arrow.setStyle("-fx-font-size: 20; -fx-text-fill: black;"); // adds the direction arrow if allowed
@@ -469,6 +482,7 @@ public class RealGUI extends Application {
                                     }
                                     grid.add(cellPane, finalCol, finalRow);
                                 });
+
                                 Thread.sleep(50); // used to create the effect of "one by one"
                             }
                         }
@@ -478,7 +492,7 @@ public class RealGUI extends Application {
                 return null;
             }
         };
-        new Thread(animationTask).start(); // has to be done on a seperate thread else it will just do the animation and delete the actual puzzle
+        new Thread(animationTask).start(); // has to be done on a separate thread else it will just do the animation and delete the actual puzzle
     }
 
     public static void main(String[] args) {
