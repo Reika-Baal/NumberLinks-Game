@@ -1,3 +1,4 @@
+import javafx.application.Platform;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -42,6 +43,7 @@ public class RealGUI extends Application {
     private void openPuzzleScreen(Stage primaryStage, int level) {
         int gridSize = level + 4;
         ColorNumberLinksGenerator generator = new ColorNumberLinksGenerator(gridSize);
+        boolean[] hasAttemptedSolve = {false}; // using array to mutate inside lambda
 
         // generate a puzzle until a solvable one
         do {
@@ -81,6 +83,7 @@ public class RealGUI extends Application {
         // when solve is clicked solves the puzzle by marking the connecting paths and redraw the grid
         solveButton.setOnAction(e -> {
             progressBar.setVisible(true);
+
             Task<Boolean> task = new Task<>() {
                 @Override
                 protected Boolean call() {
@@ -98,25 +101,17 @@ public class RealGUI extends Application {
                     return;
                 }
 
-                grid.getChildren().clear();
-                int[][] solvedGrid = generator.getGrid();
-                Map<String, String> arrows = generator.getArrowMap();
-
-                for (int row = 0; row < gridSize; row++) {
-                    for (int col = 0; col < gridSize; col++) {
-                        Rectangle cell = new Rectangle(50, 50);
-                        int code = solvedGrid[row][col];
-                        cell.setFill(code < 0 ? getMutedColorFromCode(Math.abs(code)) : getColorFromCode(code));
-                        StackPane cellPane = new StackPane(cell);
-                        String key = row + "," + col;
-                        if (arrows.containsKey(key)) {
-                            Label arrow = new Label(arrows.get(key));
-                            arrow.setStyle("-fx-font-size: 20; -fx-text-fill: black;");
-                            cellPane.getChildren().add(arrow);
-                        }
-                        grid.add(cellPane, col, row);
-                    }
+                // Only show 'already solved' message on second+ click
+                if (generator.alreadySolved && hasAttemptedSolve[0]) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Puzzle is already solved.");
+                    alert.showAndWait();
                 }
+
+                hasAttemptedSolve[0] = true;
+
+                // draw the solution
+                animateSolution(grid, generator.getGrid(), generator.getArrowMap(), gridSize);
+
             });
 
             new Thread(task).start();
@@ -185,6 +180,7 @@ public class RealGUI extends Application {
         private int pairCount;
         private Random random;
         private Map<String, String> arrowMap = new HashMap<>();
+        private boolean alreadySolved = false;
 
         public ColorNumberLinksGenerator(int gridSize) {
             this.gridSize = gridSize;
@@ -327,11 +323,14 @@ public class RealGUI extends Application {
 
         // attempts to solve all pairs using A* search
         public boolean solvePuzzle() {
+            if (alreadySolved) {
+                return true; // avoid resolving if already done
+            }
             arrowMap.clear();
             for (int color = 1; color <= pairCount; color++) {
                 int x1 = -1, y1 = -1, x2 = -1, y2 = -1;
-                for (int i = 0; i < gridSize; i++) { // find the two endpoints
-                    for (int j = 0; j < gridSize; j++) {
+                for (int i = 0; i < gridSize; i++) {
+                    for (int j = 0; j < gridSize; j++) { // finds the two endpoints
                         if (grid[i][j] == color) {
                             if (x1 == -1) {
                                 x1 = i;
@@ -347,6 +346,7 @@ public class RealGUI extends Application {
                     return false;
                 }
             }
+            alreadySolved = true;
             return true;
         }
 
@@ -429,6 +429,56 @@ public class RealGUI extends Application {
         public Map<String, String> getArrowMap() {
             return arrowMap;
         }
+    }
+
+    // animates the solution paths one by one for each colour using muted colours
+    private void animateSolution(GridPane grid, int[][] solvedGrid, Map<String, String> arrows, int gridSize) {
+        Task<Void> animationTask = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                // collects all unique colour values
+                Set<Integer> colors = new HashSet<>();
+                for (int[] row : solvedGrid) {
+                    for (int cell : row) {
+                        if (cell < 0) {
+                            colors.add(Math.abs(cell)); // store positive color code
+                        }
+                    }
+                }
+                // loops through each colour animate its own path
+                for (int color : colors) {
+                    for (int row = 0; row < gridSize; row++) {
+                        for (int col = 0; col < gridSize; col++) {
+
+                            // if current cell belongs to current path 
+                            if (solvedGrid[row][col] == -color) {
+                                int finalRow = row;
+                                int finalCol = col;
+
+                                // run visual update 
+                                Platform.runLater(() -> {
+                                    Rectangle rect = new Rectangle(50, 50);
+                                    rect.setFill(getMutedColorFromCode(color));
+
+                                    StackPane cellPane = new StackPane(rect); // holds the cell and arrow
+                                    String key = finalRow + "," + finalCol;
+                                    if (arrows.containsKey(key)) {
+                                        Label arrow = new Label(arrows.get(key));
+                                        arrow.setStyle("-fx-font-size: 20; -fx-text-fill: black;"); // adds the direction arrow if allowed
+                                        cellPane.getChildren().add(arrow);
+                                    }
+                                    grid.add(cellPane, finalCol, finalRow);
+                                });
+                                Thread.sleep(50); // used to create the effect of "one by one"
+                            }
+                        }
+                    }
+                    Thread.sleep(200); // pausing between different colours
+                }
+                return null;
+            }
+        };
+        new Thread(animationTask).start(); // has to be done on a seperate thread else it will just do the animation and delete the actual puzzle
     }
 
     public static void main(String[] args) {
