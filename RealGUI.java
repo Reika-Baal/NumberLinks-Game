@@ -1,3 +1,4 @@
+
 import javafx.application.Platform;
 import javafx.application.Application;
 import javafx.geometry.Pos;
@@ -25,6 +26,20 @@ public class RealGUI extends Application {
     public void start(Stage primaryStage) {
         Button generatePuzzle = new Button("Generate Puzzle");
         Button selectLevel = new Button("Select Level");
+
+        generatePuzzle.setStyle(
+                "-fx-background-color: #FDFDFD;"
+                + "-fx-border-color: #DDDDDD;"
+                + "-fx-border-radius: 15;"
+                + "-fx-background-radius: 15;"
+                + "-fx-font-size: 18px;"
+                + "-fx-font-family: 'Segoe UI', sans-serif;"
+                + "-fx-text-fill: #333333;"
+                + "-fx-padding: 10 20;"
+                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);"
+        );
+
+        selectLevel.setStyle(generatePuzzle.getStyle());
 
         // uses level 1 when clicking generate puzzle as a placeholder
         generatePuzzle.setOnAction(e -> openPuzzleScreen(primaryStage, 1));
@@ -61,6 +76,8 @@ public class RealGUI extends Application {
         for (int row = 0; row < gridSize; row++) {
             for (int col = 0; col < gridSize; col++) {
                 Rectangle cell = new Rectangle(50, 50);
+                cell.setArcWidth(20); // rounded corners
+                cell.setArcHeight(20);
                 int colorCode = puzzleGrid[row][col];
                 cell.setFill(getColorFromCode(colorCode));
                 StackPane cellPane = new StackPane(cell);
@@ -71,9 +88,11 @@ public class RealGUI extends Application {
         grid.setAlignment(Pos.CENTER);
 
         Button backButton = new Button("Back");
+        backButton.setStyle(buttonStyle);
         backButton.setOnAction(e -> primaryStage.setScene(mainScene));
 
         Button solveButton = new Button("Solve Puzzle");
+        solveButton.setStyle(buttonStyle);
 
         ProgressBar progressBar = new ProgressBar();
         progressBar.setVisible(false);
@@ -101,7 +120,7 @@ public class RealGUI extends Application {
                     return;
                 }
 
-                // Only show 'already solved' message on second+ click
+                // only show 'already solved' message on second+ click
                 if (generator.alreadySolved && hasAttemptedSolve[0]) {
                     Alert alert = new Alert(Alert.AlertType.INFORMATION, "Puzzle is already solved.");
                     alert.showAndWait();
@@ -127,10 +146,22 @@ public class RealGUI extends Application {
         primaryStage.setScene(puzzleScene);
     }
 
+    private final String buttonStyle
+            = "-fx-background-color: #FDFDFD;"
+            + "-fx-border-color: #DDDDDD;"
+            + "-fx-border-radius: 15;"
+            + "-fx-background-radius: 15;"
+            + "-fx-font-size: 18px;"
+            + "-fx-font-family: 'Segoe UI', sans-serif;"
+            + "-fx-text-fill: #333333;"
+            + "-fx-padding: 10 20;"
+            + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);";
+
     private void openLevelSelectScreen(Stage primaryStage) {
         VBox levelBox = new VBox(10);
         for (int i = 1; i <= 5; i++) {
             Button levelBtn = new Button("Level " + i);
+            levelBtn.setStyle(buttonStyle);
             int level = i;
             levelBtn.setOnAction(e -> openPuzzleScreen(primaryStage, level));
             levelBox.getChildren().add(levelBtn);
@@ -468,6 +499,8 @@ public class RealGUI extends Application {
                                 // run visual update 
                                 Platform.runLater(() -> {
                                     Rectangle rect = new Rectangle(50, 50);
+                                    rect.setArcWidth(20); // rounded corners
+                                    rect.setArcHeight(20);
                                     if (value == -color) {
                                         rect.setFill(getMutedColorFromCode(color)); // muted color for path
                                     } else {
