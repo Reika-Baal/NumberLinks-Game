@@ -1,4 +1,3 @@
-
 import javafx.application.Platform;
 import javafx.application.Application;
 import javafx.geometry.Pos;
@@ -142,7 +141,8 @@ public class RealGUI extends Application {
         VBox puzzleBox = new VBox(20, grid, buttonsBox, progressBar);
         puzzleBox.setAlignment(Pos.CENTER);
 
-        puzzleScene = new Scene(puzzleBox, 500, 600);
+        int preferredSize = 70 * gridSize;
+        puzzleScene = new Scene(puzzleBox, Math.max(preferredSize, 500), Math.max(preferredSize + 100, 600));
         primaryStage.setScene(puzzleScene);
     }
 
