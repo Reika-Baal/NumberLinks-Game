@@ -38,12 +38,10 @@ public class RealGUI extends Application {
                 + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);"
         );
 
-        generatePuzzle.setOnMouseEntered(e -> generatePuzzle.setStyle(buttonStyle.replace("#FDFDFD", "#E0E0E0")));
-        generatePuzzle.setOnMouseExited(e -> generatePuzzle.setStyle(buttonStyle));
+        addHoverEffect(generatePuzzle);
 
         selectLevel.setStyle(generatePuzzle.getStyle());
-        selectLevel.setOnMouseEntered(e -> selectLevel.setStyle(buttonStyle.replace("#FDFDFD", "#E0E0E0")));
-        selectLevel.setOnMouseExited(e -> selectLevel.setStyle(buttonStyle));
+        addHoverEffect(selectLevel);
 
         // uses level 1 when clicking generate puzzle as a placeholder
         generatePuzzle.setOnAction(e -> openPuzzleScreen(primaryStage, 1));
@@ -94,15 +92,13 @@ public class RealGUI extends Application {
 
         Button backButton = new Button("Back");
         backButton.setStyle(buttonStyle);
-        backButton.setOnMouseEntered(e -> backButton.setStyle(buttonStyle.replace("#FDFDFD", "#E0E0E0")));
-        backButton.setOnMouseExited(e -> backButton.setStyle(buttonStyle));
+        addHoverEffect(backButton);
 
         backButton.setOnAction(e -> primaryStage.setScene(mainScene));
 
         Button solveButton = new Button("Solve Puzzle");
         solveButton.setStyle(buttonStyle);
-        solveButton.setOnMouseEntered(e -> solveButton.setStyle(buttonStyle.replace("#FDFDFD", "#E0E0E0")));
-        solveButton.setOnMouseExited(e -> solveButton.setStyle(buttonStyle));
+        addHoverEffect(solveButton);
 
         ProgressBar progressBar = new ProgressBar();
         progressBar.setVisible(false);
@@ -174,8 +170,7 @@ public class RealGUI extends Application {
         for (int i = 1; i <= 5; i++) {
             Button levelBtn = new Button("Level " + i);
             levelBtn.setStyle(buttonStyle);
-            levelBtn.setOnMouseEntered(e -> levelBtn.setStyle(buttonStyle.replace("#FDFDFD", "#E0E0E0")));
-            levelBtn.setOnMouseExited(e -> levelBtn.setStyle(buttonStyle));
+            addHoverEffect(levelBtn);
 
             int level = i;
             levelBtn.setOnAction(e -> openPuzzleScreen(primaryStage, level));
@@ -482,6 +477,11 @@ public class RealGUI extends Application {
         public Map<String, String> getArrowMap() {
             return arrowMap;
         }
+    }
+
+    private void addHoverEffect(Button button) {
+        button.setOnMouseEntered(e -> button.setStyle(buttonStyle.replace("#FDFDFD", "#E0E0E0")));
+        button.setOnMouseExited(e -> button.setStyle(buttonStyle));
     }
 
 // animates the solution paths one by one for each colour using muted colours
