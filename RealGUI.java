@@ -38,10 +38,16 @@ public class RealGUI extends Application {
                 + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);"
         );
 
+        generatePuzzle.setOnMouseEntered(e -> generatePuzzle.setStyle(buttonStyle.replace("#FDFDFD", "#E0E0E0")));
+        generatePuzzle.setOnMouseExited(e -> generatePuzzle.setStyle(buttonStyle));
+
         selectLevel.setStyle(generatePuzzle.getStyle());
+        selectLevel.setOnMouseEntered(e -> selectLevel.setStyle(buttonStyle.replace("#FDFDFD", "#E0E0E0")));
+        selectLevel.setOnMouseExited(e -> selectLevel.setStyle(buttonStyle));
 
         // uses level 1 when clicking generate puzzle as a placeholder
         generatePuzzle.setOnAction(e -> openPuzzleScreen(primaryStage, 1));
+
         selectLevel.setOnAction(e -> openLevelSelectScreen(primaryStage));
 
         VBox vbox = new VBox(10, generatePuzzle, selectLevel);
@@ -88,10 +94,15 @@ public class RealGUI extends Application {
 
         Button backButton = new Button("Back");
         backButton.setStyle(buttonStyle);
+        backButton.setOnMouseEntered(e -> backButton.setStyle(buttonStyle.replace("#FDFDFD", "#E0E0E0")));
+        backButton.setOnMouseExited(e -> backButton.setStyle(buttonStyle));
+
         backButton.setOnAction(e -> primaryStage.setScene(mainScene));
 
         Button solveButton = new Button("Solve Puzzle");
         solveButton.setStyle(buttonStyle);
+        solveButton.setOnMouseEntered(e -> solveButton.setStyle(buttonStyle.replace("#FDFDFD", "#E0E0E0")));
+        solveButton.setOnMouseExited(e -> solveButton.setStyle(buttonStyle));
 
         ProgressBar progressBar = new ProgressBar();
         progressBar.setVisible(false);
@@ -146,7 +157,7 @@ public class RealGUI extends Application {
         primaryStage.setScene(puzzleScene);
     }
 
-    private final String buttonStyle
+    String buttonStyle
             = "-fx-background-color: #FDFDFD;"
             + "-fx-border-color: #DDDDDD;"
             + "-fx-border-radius: 15;"
@@ -155,13 +166,17 @@ public class RealGUI extends Application {
             + "-fx-font-family: 'Segoe UI', sans-serif;"
             + "-fx-text-fill: #333333;"
             + "-fx-padding: 10 20;"
-            + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);";
+            + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);"
+            + "-fx-cursor: hand;";
 
     private void openLevelSelectScreen(Stage primaryStage) {
         VBox levelBox = new VBox(10);
         for (int i = 1; i <= 5; i++) {
             Button levelBtn = new Button("Level " + i);
             levelBtn.setStyle(buttonStyle);
+            levelBtn.setOnMouseEntered(e -> levelBtn.setStyle(buttonStyle.replace("#FDFDFD", "#E0E0E0")));
+            levelBtn.setOnMouseExited(e -> levelBtn.setStyle(buttonStyle));
+
             int level = i;
             levelBtn.setOnAction(e -> openPuzzleScreen(primaryStage, level));
             levelBox.getChildren().add(levelBtn);
