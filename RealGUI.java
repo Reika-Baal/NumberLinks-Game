@@ -1,18 +1,21 @@
-import javafx.application.Platform;
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.image.Image;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
-import javafx.concurrent.Task;
+
 import java.util.*;
 
 public class RealGUI extends Application {
@@ -23,37 +26,61 @@ public class RealGUI extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        // background
+        Image bgImage = new Image("file:background.png"); // credit image: https://wallpaperbat.com/pastel-mountain-wallpapers
+        BackgroundImage backgroundImage = new BackgroundImage(
+                bgImage,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(500, 600, false, false, false, false)
+        );
+
+        Label titleLine1 = new Label("NUMBERLINKS");
+        Label titleLine2 = new Label("PUZZLE");
+
+        titleLine1.setStyle(
+                "-fx-font-size: 40px;"
+                + "-fx-font-family: 'Segoe UI', sans-serif;"
+                + "-fx-text-fill: white;"
+                + "-fx-font-weight: bold;"
+        );
+
+        titleLine2.setStyle(
+                "-fx-font-size: 40px;"
+                + "-fx-font-family: 'Segoe UI', sans-serif;"
+                + "-fx-text-fill: white;"
+                + "-fx-font-weight: bold;"
+        );
+
+        // wraps the title labels in a VBox
+        VBox titleBox = new VBox(5, titleLine1, titleLine2);
+        titleBox.setAlignment(Pos.CENTER);
+        titleBox.setPadding(new Insets(-150, 0, 0, 0));
+
         Button generatePuzzle = new Button("Generate Puzzle");
         Button selectLevel = new Button("Select Level");
 
-        generatePuzzle.setStyle(
-                "-fx-background-color: #FDFDFD;"
-                + "-fx-border-color: #DDDDDD;"
-                + "-fx-border-radius: 15;"
-                + "-fx-background-radius: 15;"
-                + "-fx-font-size: 18px;"
-                + "-fx-font-family: 'Segoe UI', sans-serif;"
-                + "-fx-text-fill: #333333;"
-                + "-fx-padding: 10 20;"
-                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);"
-        );
+        generatePuzzle.setStyle(buttonStyle);
+        selectLevel.setStyle(buttonStyle);
 
-        addHoverEffect(generatePuzzle);
+        generatePuzzle.setOnMouseEntered(e -> generatePuzzle.setStyle(buttonHoverStyle));
+        generatePuzzle.setOnMouseExited(e -> generatePuzzle.setStyle(buttonStyle));
 
-        selectLevel.setStyle(generatePuzzle.getStyle());
-        addHoverEffect(selectLevel);
+        selectLevel.setOnMouseEntered(e -> selectLevel.setStyle(buttonHoverStyle));
+        selectLevel.setOnMouseExited(e -> selectLevel.setStyle(buttonStyle));
 
-        // uses level 1 when clicking generate puzzle as a placeholder
         generatePuzzle.setOnAction(e -> openPuzzleScreen(primaryStage, 1));
-
         selectLevel.setOnAction(e -> openLevelSelectScreen(primaryStage));
 
-        VBox vbox = new VBox(10, generatePuzzle, selectLevel);
+        VBox vbox = new VBox(20, titleBox, generatePuzzle, selectLevel);
         vbox.setAlignment(Pos.CENTER);
+        vbox.setBackground(new Background(backgroundImage));
 
         mainScene = new Scene(vbox, 500, 600);
-        primaryStage.setTitle("Real Puzzle Game");
+
         primaryStage.setScene(mainScene);
+        primaryStage.setTitle("NumberLinks Puzzle");
         primaryStage.show();
     }
 
@@ -153,17 +180,17 @@ public class RealGUI extends Application {
         primaryStage.setScene(puzzleScene);
     }
 
-    String buttonStyle
-            = "-fx-background-color: #FDFDFD;"
-            + "-fx-border-color: #DDDDDD;"
+    String buttonStyle = "-fx-background-color: #444444;"
+            + "-fx-border-color: #333333;"
             + "-fx-border-radius: 15;"
             + "-fx-background-radius: 15;"
             + "-fx-font-size: 18px;"
             + "-fx-font-family: 'Segoe UI', sans-serif;"
-            + "-fx-text-fill: #333333;"
+            + "-fx-text-fill: white;"
             + "-fx-padding: 10 20;"
-            + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);"
             + "-fx-cursor: hand;";
+
+    String buttonHoverStyle = buttonStyle.replace("#444444", "#555555");
 
     private void openLevelSelectScreen(Stage primaryStage) {
         VBox levelBox = new VBox(10);
