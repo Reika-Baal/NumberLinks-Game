@@ -1,3 +1,4 @@
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -12,8 +13,6 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
 import java.util.*;
@@ -90,32 +89,66 @@ public class RealGUI extends Application {
         ColorNumberLinksGenerator generator = new ColorNumberLinksGenerator(gridSize);
         boolean[] hasAttemptedSolve = {false}; // using array to mutate inside lambda
 
-        // generate a puzzle until a solvable one
         do {
             generator.generate();
         } while (!generator.verify());
 
         int[][] puzzleGrid = generator.getGrid();
 
+        userGrid = new int[gridSize][gridSize]; // to track user interaction separately
+        for (int i = 0; i < gridSize; i++) {
+            System.arraycopy(puzzleGrid[i], 0, userGrid[i], 0, gridSize);
+        }
+
         // creating a GridPane to display the puzzle
         GridPane grid = new GridPane();
         grid.setHgap(5);
         grid.setVgap(5);
-        StackPane[][] cellPanes = new StackPane[gridSize][gridSize];
+        grid.setAlignment(Pos.CENTER);
+
+        cellRects = new Rectangle[gridSize][gridSize];
+        cellPanes = new StackPane[gridSize][gridSize];
 
         for (int row = 0; row < gridSize; row++) {
             for (int col = 0; col < gridSize; col++) {
                 Rectangle cell = new Rectangle(50, 50);
-                cell.setArcWidth(20); // rounded corners
+                cell.setArcWidth(20);
                 cell.setArcHeight(20);
                 int colorCode = puzzleGrid[row][col];
                 cell.setFill(getColorFromCode(colorCode));
+                cellRects[row][col] = cell;
+
                 StackPane cellPane = new StackPane(cell);
                 cellPanes[row][col] = cellPane;
+
+                final int r = row, c = col;
+
+                cellPane.setOnMousePressed(e -> {
+                    isDrawing = true;
+                    handleCellClick(r, c); // pick or reset color
+                    e.consume();
+                });
+
+                cellPane.setOnDragDetected(e -> {
+                    cellPane.startFullDrag(); // enables full drag recognition
+                    e.consume();
+                });
+
+                cellPane.setOnMouseDragEntered(e -> {
+                    if (isDrawing) {
+                        handleDragOver(r, c);
+                    }
+                    e.consume();
+                });
+
+                cellPane.setOnMouseReleased(e -> {
+                    isDrawing = false;
+                    e.consume();
+                });
+
                 grid.add(cellPane, col, row);
             }
         }
-        grid.setAlignment(Pos.CENTER);
 
         Button backButton = new Button("Back");
         backButton.setStyle(buttonStyle);
@@ -192,6 +225,76 @@ public class RealGUI extends Application {
 
     String buttonHoverStyle = buttonStyle.replace("#444444", "#555555");
 
+    private void handleCellClick(int row, int col) {
+        int value = userGrid[row][col];
+
+        if (value > 0) { // clicked a colored endpoint
+            if (selectedColor == value) {
+                // reset current path
+                for (int[] pos : currentPath) {
+                    int r = pos[0], c = pos[1];
+                    userGrid[r][c] = 0;
+                    cellRects[r][c].setFill(Color.LIGHTGRAY);
+                }
+                selectedColor = 0;
+                currentPath.clear();
+            } else {
+                selectedColor = value;
+                currentPath.clear();
+            }
+        }
+    }
+
+    private void handleDragOver(int row, int col) {
+        if (selectedColor == 0) {
+            return;
+        }
+
+        // Don't draw on endpoints or already marked tiles
+        int value = userGrid[row][col];
+        if (value != 0) {
+            return;
+        }
+
+        // Don't revisit same tile in path
+        for (int[] pos : currentPath) {
+            if (pos[0] == row && pos[1] == col) {
+                return;
+            }
+        }
+
+        if (!currentPath.isEmpty()) {
+            int[] last = currentPath.get(currentPath.size() - 1);
+            int lr = last[0], lc = last[1];
+            if (Math.abs(lr - row) + Math.abs(lc - col) != 1) {
+                return;
+            }
+        } else {
+            // First tile must be adjacent to selectedColor
+            boolean validStart = false;
+            for (int dr = -1; dr <= 1; dr++) {
+                for (int dc = -1; dc <= 1; dc++) {
+                    if (Math.abs(dr) + Math.abs(dc) != 1) {
+                        continue;
+                    }
+                    int nr = row + dr, nc = col + dc;
+                    if (nr >= 0 && nr < userGrid.length && nc >= 0 && nc < userGrid[0].length
+                            && userGrid[nr][nc] == selectedColor) {
+                        validStart = true;
+                    }
+                }
+            }
+            if (!validStart) {
+                return;
+            }
+        }
+
+        // Update path
+        userGrid[row][col] = -selectedColor;
+        cellRects[row][col].setFill(getMutedColorFromCode(selectedColor));
+        currentPath.add(new int[]{row, col});
+    }
+
     private void openLevelSelectScreen(Stage primaryStage) {
         VBox levelBox = new VBox(10);
         for (int i = 1; i <= 5; i++) {
@@ -207,6 +310,13 @@ public class RealGUI extends Application {
         levelSelectScene = new Scene(levelBox, 500, 600);
         primaryStage.setScene(levelSelectScene);
     }
+
+    private int selectedColor = 0;
+    private List<int[]> currentPath = new ArrayList<>();
+    private Rectangle[][] cellRects;
+    private int[][] userGrid;
+    private StackPane[][] cellPanes;
+    private boolean isDrawing = false;
 
     // maps the integer code to a JavaFX colour
     private Color getColorFromCode(int code) {
