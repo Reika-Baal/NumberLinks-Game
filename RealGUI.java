@@ -1,4 +1,3 @@
-
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -83,6 +82,8 @@ public class RealGUI extends Application {
         primaryStage.show();
     }
 
+    private boolean puzzleSolved = false;
+
     // determines the size of the grid using the level 
     private void openPuzzleScreen(Stage primaryStage, int level) {
         int gridSize = level + 4;
@@ -126,6 +127,9 @@ public class RealGUI extends Application {
                 cellPane.setOnMousePressed(e -> {
                     isDrawing = true;
                     handleCellClick(r, c); // pick or reset color
+                    if (puzzleSolved) {
+                        return;
+                    }
                     e.consume();
                 });
 
@@ -143,6 +147,39 @@ public class RealGUI extends Application {
 
                 cellPane.setOnMouseReleased(e -> {
                     isDrawing = false;
+
+                    // if the path was not on an endpoint. reset it
+                    if (!currentPath.isEmpty()) {
+                        boolean connectedToEndpoint = false;
+                        int[] last = currentPath.get(currentPath.size() - 1);
+                        int lr = last[0], lc = last[1];
+
+                        for (int dr = -1; dr <= 1; dr++) {
+                            for (int dc = -1; dc <= 1; dc++) {
+                                if (Math.abs(dr) + Math.abs(dc) != 1) {
+                                    continue;
+                                }
+                                int nr = lr + dr, nc = lc + dc;
+                                if (nr >= 0 && nr < userGrid.length && nc >= 0 && nc < userGrid[0].length) {
+                                    if (userGrid[nr][nc] == selectedColor) {
+                                        connectedToEndpoint = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!connectedToEndpoint) {
+                            // reset the path
+                            for (int[] pos : currentPath) {
+                                int pr = pos[0], pc = pos[1];
+                                userGrid[pr][pc] = 0;
+                                cellRects[pr][pc].setFill(Color.LIGHTGRAY);
+                            }
+                            currentPath.clear();
+                        }
+                    }
+
                     e.consume();
                 });
 
@@ -167,6 +204,7 @@ public class RealGUI extends Application {
 
         // when solve is clicked solves the puzzle by marking the connecting paths and redraw the grid
         solveButton.setOnAction(e -> {
+            puzzleSolved = true;
             progressBar.setVisible(true);
 
             Task<Boolean> task = new Task<>() {
@@ -228,14 +266,18 @@ public class RealGUI extends Application {
     private void handleCellClick(int row, int col) {
         int value = userGrid[row][col];
 
-        if (value > 0) { // clicked a colored endpoint
-            if (selectedColor == value) {
-                // reset current path
-                for (int[] pos : currentPath) {
-                    int r = pos[0], c = pos[1];
-                    userGrid[r][c] = 0;
-                    cellRects[r][c].setFill(Color.LIGHTGRAY);
+        if (value > 0) { // clicked a coloured endpoint
+            for (int i = 0; i < userGrid.length; i++) {
+                for (int j = 0; j < userGrid[0].length; j++) {
+                    if (userGrid[i][j] == -value) {
+                        userGrid[i][j] = 0;
+                        cellRects[i][j].setFill(Color.LIGHTGRAY);
+                    }
                 }
+            }
+
+            // if already selected then deselect it
+            if (selectedColor == value) {
                 selectedColor = 0;
                 currentPath.clear();
             } else {
@@ -246,17 +288,20 @@ public class RealGUI extends Application {
     }
 
     private void handleDragOver(int row, int col) {
+        if (puzzleSolved) {
+            return;
+        }
         if (selectedColor == 0) {
             return;
         }
 
-        // Don't draw on endpoints or already marked tiles
+        // dont draw on endpoints or already marked tiles
         int value = userGrid[row][col];
         if (value != 0) {
             return;
         }
 
-        // Don't revisit same tile in path
+        // wont revisit same tile in path
         for (int[] pos : currentPath) {
             if (pos[0] == row && pos[1] == col) {
                 return;
@@ -270,7 +315,7 @@ public class RealGUI extends Application {
                 return;
             }
         } else {
-            // First tile must be adjacent to selectedColor
+            // first tile must be adjacent to selectedColor
             boolean validStart = false;
             for (int dr = -1; dr <= 1; dr++) {
                 for (int dc = -1; dc <= 1; dc++) {
@@ -289,7 +334,7 @@ public class RealGUI extends Application {
             }
         }
 
-        // Update path
+        // update path
         userGrid[row][col] = -selectedColor;
         cellRects[row][col].setFill(getMutedColorFromCode(selectedColor));
         currentPath.add(new int[]{row, col});
@@ -425,7 +470,7 @@ public class RealGUI extends Application {
             }
         }
 
-        // Manhattan distance heuristic credit : https://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
+        // manhattan distance heuristic credit : https://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
         private int heuristic(int x, int y, int tx, int ty) {
             return Math.abs(x - tx) + Math.abs(y - ty);
         }
