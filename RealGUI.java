@@ -178,6 +178,11 @@ public class RealGUI extends Application {
                             }
                             currentPath.clear();
                         }
+                        if (!puzzleSolved && checkUserSolved()) {
+                            puzzleSolved = true;
+                            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Congrats, you solved the puzzle!");
+                            alert.showAndWait();
+                        }
                     }
 
                     e.consume();
@@ -666,7 +671,31 @@ public class RealGUI extends Application {
         button.setOnMouseExited(e -> button.setStyle(buttonStyle));
     }
 
-// animates the solution paths one by one for each colour using muted colours
+    private boolean checkUserSolved() {
+        for (int i = 0; i < userGrid.length; i++) {
+            for (int j = 0; j < userGrid[0].length; j++) {
+                int val = userGrid[i][j];
+                if (val > 0) { // it's an endpoint
+                    boolean connected = false;
+                    for (int[] dir : new int[][]{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}) {
+                        int ni = i + dir[0], nj = j + dir[1];
+                        if (ni >= 0 && ni < userGrid.length && nj >= 0 && nj < userGrid[0].length) {
+                            if (userGrid[ni][nj] == -val) {
+                                connected = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!connected) {
+                        return false; // one endpoint isn't connected
+
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
     private void animateSolution(GridPane grid, int[][] solvedGrid, Map<String, String> arrows, int gridSize) {
         Task<Void> animationTask = new Task<>() {
             @Override
