@@ -86,6 +86,7 @@ public class RealGUI extends Application {
 
     // determines the size of the grid using the level 
     private void openPuzzleScreen(Stage primaryStage, int level) {
+        puzzleSolved = false;
         int gridSize = level + 4;
         ColorNumberLinksGenerator generator = new ColorNumberLinksGenerator(gridSize);
         boolean[] hasAttemptedSolve = {false}; // using array to mutate inside lambda
