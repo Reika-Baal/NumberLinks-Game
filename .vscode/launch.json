@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "BasicGUI",
+            "request": "launch",
+            "startupClass": "BasicGUI", 
+            "vmArgs": "--module-path \"c:\\Program Files\\Java\\javafx-sdk-23.0.1\\lib\" --add-modules javafx.controls,javafx.fxml",
+            "cwd": "${workspaceFolder}", 
+            "jdkPath": "c:\\Program Files\\Java\\jdk-23.0.1",
+            "projectName": "BasicGUI" 
+        }
+    ]
+}
